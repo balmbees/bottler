@@ -18,6 +18,7 @@ including the whole `erts` by now).
 are using [Harakiri](http://github.com/elpulgardelpanda/harakiri).
 * __deploy__: _release_, _ship_, _install_ and then _restart_.
 * __rollback__: quick _restart_ on a previous release.
+* __helper_scripts__: generate some helper scripts based on project config.
 
 You should have public key ssh access to all servers you intend to work with.
 Erlang runtime should be installed there too. Everything else, including Elixir
@@ -26,12 +27,18 @@ itself, is included in the release.
 By now it's not able to deal with all the hot code swap bolts, screws and nuts.
 Someday will be.
 
+## Alternative to...
+
+Initially it was an alternative to [exrm](https://github.com/bitwalker/exrm), due to its lack of some features I love. 
+
+Recently, after creating and using bottler on several projects for some months, I discovered [edeliver](https://github.com/boldpoker/edeliver) and it looks great! When I have time I will read carefully its code and play differences with bottler, maybe borrow some ideas. 
+
 ## Use
 
 Add to your `deps` like this:
 
 ```elixir
-    {:bottler, " >= 0.2.0"}
+    {:bottler, " >= 0.4.0"}
 ```
 
 Or if you want to take a walk on the wild side:
@@ -48,34 +55,25 @@ On your config:
                                remote_user: "produser" ]
 ```
 
-Then you can use the tasks like `mix bottler.release`. Take a look at the
-docs for each task with `mix help <task>`.
+Then you can use the tasks like `mix bottler.release`. Take a look at the docs for each task with `mix help <task>`.
 
-You may also want to add `/rel` to your `.gitignore` if you don't want every
-generated file, including release `.tar.gz`, get into your repo.
+`prod` environment is used by default. Use like `MIX_ENV=other_env mix bottler.taskname` to force it to `other_env`.
+
+You may also want to add `<project>/rel` and `<project>/.bottler` to your `.gitignore` if you don't want every generated file, including release `.tar.gz`, get into your repo.
 
 ## Release
 
 Build a release file. Use like `mix bottler.release`.
-
-`prod` environment is used by default. Use like
-`MIX_ENV=other_env mix bottler.release` to force it to `other_env`.
 
 ## Ship
 
 Ship a release file to configured remote servers.
 Use like `mix bottler.ship`.
 
-`prod` environment is used by default. Use like
-`MIX_ENV=other_env mix bottler.ship` to force it to `other_env`.
-
 ## Install
 
 Install a shipped file on configured remote servers.
 Use like `mix bottler.install`.
-
-`prod` environment is used by default. Use like
-`MIX_ENV=other_env mix bottler.install` to force it to `other_env`.
 
 ## Restart
 
@@ -83,18 +81,12 @@ Touch `tmp/restart` on configured remote servers.
 That expects to have `Harakiri` or similar software reacting to that.
 Use like `mix bottler.restart`.
 
-`prod` environment is used by default. Use like
-`MIX_ENV=other_env mix bottler.restart` to force it to `other_env`.
-
 ## Deploy
 
 Build a release file, ship it to remote servers, install it, and restart
 the app. No hot code swap for now.
 
 Use like `mix deploy`.
-
-`prod` environment is used by default. Use like
-`MIX_ENV=other_env mix deploy` to force it to `other_env`.
 
 ## Rollback
 
@@ -107,30 +99,45 @@ It's up to you to keep all your servers rollback-able (yeah).
 
 Use like `mix bottler.rollback`.
 
-`prod` environment is used by default. Use like
-`MIX_ENV=other_env mix bottler.rollback` to force it to `other_env`.
+## Helper Scripts
+
+This generates some helper scripts using project's current config information, such as target servers. You can run this task repeatedly to force regeneration of these scripts to reflect config changes.
+
+Generated scripts are located under `<project>/.bottler/scripts` (configurable via `scripts_folder`). It will also generate links to those scripts on a configurable folder to add them to your system PATH. The configuration param is `into_path_folder`. Its default value is `~/local/bin`.
+
+Use like `mix bottler.helper_scripts`.
+
+The generated scripts' list is short by now:
+
+* A `<project>_<server>` script for each target server configured. That script will open an SSH session with this server. When you want to access one of your production servers, the one that is called `daisy42`, for the project called `motion`, then you can invoke `motion_daisy42` on any terminal and it will open up an SSH shell for you.
 
 ## TODOs
 
 * Add more testing
+* Separate section for documenting every configuration option
 * Get it stable on production
 * Options to filter target servers from command line
 * Wait until _current_ release is seen running.
 * Complete README
 * Rollback to _any_ previous version
 * Optionally include `erts` (now we can ship openssl too see [here](http://www.erlang.org/download/otp_src_17.4.readme))
-* Use scalable middleplace to ship releases
+* Use scalable middleplace to ship releases [*](notes/scalable_shipment.md)
 * Allow hot code swap
 * Support for hooks
 * Add tools for docker deploys
-* Add support for deploy to AWS instances [*](https://github.com/gleber/erlcloud)
+* Add support for deploy to AWS instances [*](https://github.com/gleber/erlcloud)[*](notes/aws.md)
 * Add support for deploy to GCE instances
 
 ## Changelog
 
+### 0.4.1
+
+* Fix `:ssh` sometimes not started on install.
+
 ### 0.4.0
 
 * Use [SSHEx](https://github.com/elpulgardelpanda/sshex)
+* Add __helper_scripts__
 
 ### 0.3.0
 
